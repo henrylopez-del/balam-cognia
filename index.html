@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --bg:       #f6f7fb;
@@ -505,8 +506,10 @@ const RL = {1:'Raramente',2:'Ocasionalmente',3:'Regularmente',4:'Consistentement
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let curSec = null, curStd = null, navHist = ['home'];
-const db = () => { try { return JSON.parse(localStorage.getItem('bc3')||'{}'); } catch{ return {}; }};
-const dbSave = d => localStorage.setItem('bc3', JSON.stringify(d));
+const db     = () => { try { return JSON.parse(localStorage.getItem('bc3')||'{}'); }     catch{ return {}; }};
+const dbSave = d  => localStorage.setItem('bc3', JSON.stringify(d));
+const dbMeta = () => { try { return JSON.parse(localStorage.getItem('bc3_meta')||'{}'); } catch{ return {}; }};
+const dbMetaSave = m => localStorage.setItem('bc3_meta', JSON.stringify(m));
 const secOf = n => SECTIONS.find(s => s.standards.includes(n));
 
 function setAccent(sec) {
@@ -622,6 +625,21 @@ function renderForm(n) {
   const fc = document.getElementById('formContent');
   fc.innerHTML='';
 
+  // Teacher name card (global, pre-filled from meta)
+  const _meta = dbMeta();
+  const nc=document.createElement('div'); nc.className='fcard';
+  nc.innerHTML=`
+    <div class="fcard-head">
+      <div class="fcard-qnum" style="font-size:13px">✎</div>
+      <label for="docente_name">Tu nombre completo — aparece en el PDF de evidencia</label>
+    </div>
+    <div class="fcard-body">
+      <input type="text" id="docente_name" placeholder="Ej. María González Ramírez"
+        value="${_meta.name||''}"
+        style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid var(--ash);border-radius:var(--r-card);font:inherit;font-size:14px;color:var(--ink);background:var(--white);outline:none;">
+    </div>`;
+  fc.appendChild(nc);
+
   s.q.slice(0,3).forEach((q,i)=>{
     const idx=i+1;
     const c=document.createElement('div'); c.className='fcard';
@@ -696,6 +714,160 @@ function onFile(n,inp) {
   uz.dataset.file=f.name;
 }
 
+// ─── PDF GENERATOR ─────────────────────────────────────────────────────────
+function generatePDF(n) {
+  if (!window.jspdf) { showToast('jsPDF no cargó.'); return; }
+  const {jsPDF} = window.jspdf;
+  const doc  = new jsPDF({unit:'mm', format:'a4'});
+  const s    = S[n], sec = secOf(n), d = db()[n]||{}, meta = dbMeta();
+
+  const PW=210, PH=297, ML=18, MR=18, MT=16, MB=14;
+  const CW = PW-ML-MR; // 174 mm
+  let y = MT;
+
+  const RL4 = ['','Raramente','En desarrollo','Frecuentemente','Consistentemente'];
+  const fecha = d.at
+    ? new Date(d.at).toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'})
+    : new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+
+  const hexRGB = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const [ar,ag,ab] = hexRGB(sec.ac);
+
+  function ck(needed=12) {
+    if (y+needed > PH-MB) { doc.addPage(); y=MT; }
+  }
+
+  // ── HEADER BAR
+  doc.setFillColor(ar,ag,ab);
+  doc.rect(0,0,PW,11,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(6.5);
+  doc.setTextColor(40,46,62);
+  doc.text('CENTRO ESCOLAR BALAM  ·  BANCO DE EVIDENCIAS COGNIA  ·  CICLO 2025–2026', ML, 7.5);
+
+  y = 19;
+
+  // ── STANDARD BADGE
+  doc.setFillColor(66,85,255);
+  doc.roundedRect(ML, y, 20, 7, 1.5,1.5,'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(7);
+  doc.setTextColor(255,255,255);
+  doc.text('EST. '+String(n).padStart(2,'0'), ML+2, y+4.8);
+
+  // Section tag
+  doc.setFillColor(240,241,246);
+  doc.roundedRect(ML+23, y, 90, 7, 1.5,1.5,'F');
+  doc.setFontSize(7);
+  doc.setTextColor(88,99,128);
+  doc.text(sec.nameES, ML+26, y+4.8);
+
+  y += 12;
+
+  // ── TITLE
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(15);
+  doc.setTextColor(40,46,62);
+  const tLines = doc.splitTextToSize(s.t, CW);
+  doc.text(tLines, ML, y);
+  y += tLines.length*6.5+3;
+
+  // ── OFFICIAL COGNIA TEXT (quote block)
+  const offLines = doc.splitTextToSize('“'+s.f+'”', CW-10);
+  const offH     = offLines.length*4.5+8;
+  doc.setFillColor(ar,ag,ab);
+  doc.rect(ML,y,3,offH,'F');
+  doc.setFillColor(248,249,251);
+  doc.rect(ML+3,y,CW-3,offH,'F');
+  doc.setFont('helvetica','italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(88,99,128);
+  doc.text(offLines, ML+8, y+5);
+  y += offH+6;
+
+  // ── METADATA
+  doc.setDrawColor(217,221,232);
+  doc.setLineWidth(0.3);
+  doc.line(ML,y,ML+CW,y); y+=5;
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,46,62); doc.text('Docente:',      ML,     y);
+  doc.setFont('helvetica','normal');doc.setTextColor(88,99,128);doc.text(meta.name||'—', ML+18,  y);
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,46,62); doc.text('Sección:',      ML+95,  y);
+  doc.setFont('helvetica','normal');doc.setTextColor(88,99,128);doc.text(sec.nameES,     ML+112, y);
+  y += 5;
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,46,62); doc.text('Fecha:',        ML,     y);
+  doc.setFont('helvetica','normal');doc.setTextColor(88,99,128);doc.text(fecha,          ML+13,  y);
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,46,62); doc.text('Autoevaluación:',ML+95, y);
+  doc.setFont('helvetica','normal');doc.setTextColor(88,99,128);
+  doc.text(d.rating ? d.rating+' — '+RL4[d.rating] : '—', ML+124, y);
+  y += 5;
+  doc.line(ML,y,ML+CW,y); y+=9;
+
+  // ── Q & A
+  [0,1,2].forEach(i => {
+    const q     = s.q[i];
+    const ans   = [d.q1,d.q2,d.q3][i]||'—';
+    const qLines= doc.splitTextToSize(q, CW-11);
+    ck(qLines.length*4.5+6);
+
+    // Question circle
+    doc.setFillColor(66,85,255);
+    doc.circle(ML+3.5, y+1.2, 3.5,'F');
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(255,255,255);
+    doc.text(String(i+1), ML+2.2, y+2);
+
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.setTextColor(40,46,62);
+    doc.text(qLines, ML+10, y);
+    y += qLines.length*4.5+3;
+
+    // Answer box
+    const aLines = doc.splitTextToSize(ans, CW-12);
+    const aH     = aLines.length*4.5+10;
+    ck(aH+5);
+    doc.setFillColor(250,250,252);
+    doc.setDrawColor(217,221,232);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(ML+4, y, CW-4, aH, 2,2,'FD');
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(88,99,128);
+    doc.text(aLines, ML+8, y+5);
+    y += aH+8;
+  });
+
+  // ── EVIDENCE FILE
+  ck(14);
+  doc.setFillColor(248,249,251);
+  doc.setDrawColor(217,221,232);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(ML,y,CW,13,2,2,'FD');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(40,46,62);
+  doc.text('Evidencia adjunta:', ML+4, y+8.5);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(88,99,128);
+  doc.text(d.q4file||'Sin archivo adjunto', ML+42, y+8.5);
+
+  // ── FOOTER BAR
+  doc.setFillColor(40,46,62);
+  doc.rect(0, PH-10, PW, 10,'F');
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(180,185,200);
+  doc.text('Centro Escolar Balam  ·  Cognia Accreditation Evidence  ·  Generado automáticamente', ML, PH-3.5);
+  const rTag = 'S'+String(n).padStart(2,'0')+' · '+fecha;
+  doc.text(rTag, PW-MR-doc.getTextWidth(rTag), PH-3.5);
+
+  const fname = 'S'+String(n).padStart(2,'0')+'_'+s.t.slice(0,28).replace(/[^\w\sÀ-ɏ]/g,'').trim().replace(/\s+/g,'_')+'.pdf';
+  doc.save(fname);
+}
+
 function submitForm(n) {
   const d=db(), e=d[n]||{};
   e.q1=document.getElementById('q1_'+n)?.value?.trim()||'';
@@ -706,10 +878,18 @@ function submitForm(n) {
   const rt=document.querySelector(`input[name="rt_${n}"]:checked`);
   e.rating=rt?parseInt(rt.value):null;
   if(!e.q1&&!e.q2&&!e.q3&&!e.q4file&&!e.rating){showToast('Completa al menos un campo.');return;}
+
+  // Save teacher name globally
+  const nameVal=document.getElementById('docente_name')?.value?.trim();
+  if(nameVal){ const m=dbMeta(); m.name=nameVal; dbMetaSave(m); }
+
   e.ok=true; e.at=new Date().toISOString();
   d[n]=e; dbSave(d);
-  showToast('Estándar '+n+' guardado.');
-  setTimeout(()=>navigate('section',{section:secOf(n)}),1100);
+
+  try { generatePDF(n); } catch(err){ console.warn('PDF error:',err); }
+
+  showToast('Evidencia guardada — PDF descargado.');
+  setTimeout(()=>navigate('section',{section:secOf(n)}),1500);
 }
 
 function showToast(msg) {
