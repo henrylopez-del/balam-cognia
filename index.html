@@ -348,6 +348,58 @@ textarea::placeholder { color: var(--light-sl); }
 .rd { font-size: 10px; color: var(--slate); text-align: center; line-height: 1.3; }
 
 /* Actions */
+/* ─── VALIDATION ────────────────────────────────────────── */
+.val-btn {
+  margin-top: 10px; padding: 7px 18px; border-radius: var(--r-btn);
+  border: 1.5px solid var(--ash); background: var(--white); color: var(--slate);
+  font: 600 13px var(--font); cursor: pointer; transition: all .15s;
+}
+.val-btn:hover { border-color: var(--violet); color: var(--violet); }
+.val-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.val-result {
+  margin-top: 10px; border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; line-height: 1.5; display: none;
+}
+.val-result.show { display: flex; gap: 10px; align-items: flex-start; }
+.val-result.pass { background: #edfbf3; border: 1.5px solid #3ec97a; color: #1a6e3a; }
+.val-result.fail { background: #fff8ec; border: 1.5px solid #f5a623; color: #7a4a00; }
+.val-result.checking { background: var(--bg); border: 1.5px solid var(--ash); color: var(--slate); }
+.val-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.val-text strong { display: block; margin-bottom: 2px; }
+
+/* ─── LAYER 2 CARD ──────────────────────────────────────── */
+.l2-card {
+  border-radius: var(--r-card); background: var(--white); box-shadow: var(--shadow);
+  padding: 20px; margin-top: 0; display: none;
+}
+.l2-card.visible { display: block; }
+.l2-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.l2-badge {
+  background: var(--violet); color: #fff; border-radius: 6px;
+  padding: 4px 10px; font: 700 11px var(--font); letter-spacing: .04em;
+}
+.l2-title { font: 700 15px var(--font); color: var(--ink); }
+.l2-desc { font-size: 13px; color: var(--slate); margin-bottom: 14px; line-height: 1.5; }
+.l2-btn {
+  padding: 11px 28px; border-radius: var(--r-btn); border: none;
+  background: var(--violet); color: #fff; font: 700 14px var(--font); cursor: pointer;
+  transition: background .15s;
+}
+.l2-btn:hover { background: #3547e0; }
+.l2-btn:disabled { background: var(--ash); color: var(--light-sl); cursor: not-allowed; }
+.l2-result {
+  margin-top: 14px; border-radius: 8px; padding: 14px 16px;
+  font-size: 13px; line-height: 1.6; display: none;
+}
+.l2-result.show { display: block; }
+.l2-result.pass { background: #edfbf3; border: 1.5px solid #3ec97a; }
+.l2-result.fail { background: #fff8ec; border: 1.5px solid #f5a623; }
+.l2-result.checking { background: var(--bg); border: 1.5px solid var(--ash); color: var(--slate); }
+.l2-score { font: 700 13px var(--font); margin-bottom: 6px; }
+.l2-improvements { margin-top: 8px; padding-left: 16px; }
+.l2-improvements li { margin-bottom: 3px; color: #7a4a00; }
+
 .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 
 .btn-save {
@@ -508,9 +560,14 @@ const S = {
 
 const RL = {1:'Raramente',2:'Ocasionalmente',3:'Regularmente',4:'Consistentemente'};
 
+// ─── WEBHOOKS ──────────────────────────────────────────────────────────────
+const WH_L1 = 'https://n8n-ntcue-u59578.vm.elestio.app/webhook/cognia-validate-field';
+const WH_L2 = 'https://n8n-ntcue-u59578.vm.elestio.app/webhook/cognia-validate-standard';
+
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let curSec = null, curStd = null, navHist = ['home'];
-const _files = {}; // in-memory file store: {stdN: [{name, type, dataUrl}]}
+const _files = {};      // in-memory file store: {stdN: [{name, type, dataUrl}]}
+const _val   = {};      // validation state: {stdN: {q1,q2,q3: null|'pass'|'fail', l2: null|'pass'|'fail'}}
 const db     = () => { try { return JSON.parse(localStorage.getItem('bc3')||'{}'); }     catch{ return {}; }};
 const dbSave = d  => localStorage.setItem('bc3', JSON.stringify(d));
 const dbMeta = () => { try { return JSON.parse(localStorage.getItem('bc3_meta')||'{}'); } catch{ return {}; }};
@@ -645,8 +702,11 @@ function renderForm(n) {
     </div>`;
   fc.appendChild(nc);
 
+  if (!_val[n]) _val[n] = {q1:null, q2:null, q3:null, l2:null};
+
   s.q.slice(0,3).forEach((q,i)=>{
     const idx=i+1;
+    const vst = _val[n]['q'+idx];
     const c=document.createElement('div'); c.className='fcard';
     c.innerHTML=`
       <div class="fcard-head">
@@ -655,6 +715,11 @@ function renderForm(n) {
       </div>
       <div class="fcard-body">
         <textarea id="q${idx}_${n}" rows="4" placeholder="Escribe tu respuesta aquí…">${sv['q'+idx]||''}</textarea>
+        <button class="val-btn" id="vbtn${idx}_${n}" onclick="validateField(${n},${idx})">Verificar respuesta</button>
+        <div class="val-result ${vst}" id="vres${idx}_${n}">
+          <span class="val-icon">${vst==='pass'?'✓':vst==='fail'?'⚠':''}</span>
+          <span class="val-text" id="vtxt${idx}_${n}"></span>
+        </div>
       </div>`;
     fc.appendChild(c);
   });
@@ -695,12 +760,28 @@ function renderForm(n) {
     </div>`;
   fc.appendChild(rc);
 
+  // Layer 2 card
+  const l2v = _val[n].l2;
+  const l2c = document.createElement('div');
+  l2c.className = 'l2-card' + ((_val[n].q1==='pass'&&_val[n].q2==='pass'&&_val[n].q3==='pass')?' visible':'');
+  l2c.id = 'l2card_'+n;
+  l2c.innerHTML=`
+    <div class="l2-header">
+      <span class="l2-badge">PASO 2</span>
+      <span class="l2-title">Validación completa del estándar</span>
+    </div>
+    <div class="l2-desc">Las tres respuestas se analizan en conjunto contra el estándar oficial de Cognia. El PDF solo se genera si esta validación pasa.</div>
+    <button class="l2-btn" id="l2btn_${n}" onclick="validateStandard(${n})">Analizar evidencia completa</button>
+    <div class="l2-result ${l2v||''}" id="l2res_${n}"></div>`;
+  fc.appendChild(l2c);
+
   // Actions
+  const l2passed = _val[n] && _val[n].l2==='pass';
   const ac=document.createElement('div'); ac.className='form-actions';
   ac.innerHTML=`
-    <button class="btn-save" onclick="submitForm(${n})">
+    <button class="btn-save" id="savebtn_${n}" onclick="submitForm(${n})" ${l2passed?'':'disabled style="background:var(--ash);color:var(--light-sl);cursor:not-allowed"'}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
-      Guardar evidencia
+      Guardar y generar PDF
     </button>
     <button class="btn-cancel" onclick="navigate('section',{section:secOf(${n})})">Cancelar</button>`;
   fc.appendChild(ac);
@@ -757,6 +838,118 @@ function refreshUz(n, names) {
   uz.innerHTML = `<input type="file" id="fi_${n}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.mp4,.mov,.ppt,.pptx" multiple onchange="onFile(${n},this)">
     ${uzHtml(names)}`;
   uz.dataset.files = JSON.stringify(names);
+}
+
+// ─── VALIDATION LAYER 1 — per field ────────────────────────────────────────
+async function validateField(n, idx) {
+  const answer = document.getElementById(`q${idx}_${n}`)?.value?.trim();
+  if (!answer || answer.length < 10) {
+    showFieldResult(n, idx, 'fail', 'Escribe una respuesta antes de verificar.');
+    return;
+  }
+  const btn = document.getElementById(`vbtn${idx}_${n}`);
+  btn.disabled = true;
+  showFieldResult(n, idx, 'checking', 'Analizando…');
+
+  try {
+    const res = await fetch(WH_L1, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        std_number: n,
+        std_text:   S[n].f,
+        std_title:  S[n].t,
+        question:   S[n].q[idx-1],
+        answer
+      })
+    });
+    const data = await res.json();
+    _val[n]['q'+idx] = data.pass ? 'pass' : 'fail';
+    showFieldResult(n, idx, _val[n]['q'+idx], data.feedback || '');
+    checkL1Complete(n);
+  } catch(e) {
+    _val[n]['q'+idx] = null;
+    showFieldResult(n, idx, 'fail', 'Error de conexión. Intenta de nuevo.');
+  }
+  btn.disabled = false;
+}
+
+function showFieldResult(n, idx, state, text) {
+  const el  = document.getElementById(`vres${idx}_${n}`);
+  const txt = document.getElementById(`vtxt${idx}_${n}`);
+  if (!el || !txt) return;
+  el.className = `val-result ${state} show`;
+  const icons = {pass:'✓', fail:'⚠', checking:'⏳'};
+  const labels = {pass:'Aprobado', fail:'Requiere ajuste', checking:''};
+  txt.innerHTML = `<strong>${labels[state]||''}</strong>${text}`;
+  el.querySelector('.val-icon').textContent = icons[state]||'';
+}
+
+function checkL1Complete(n) {
+  const v = _val[n];
+  const allPass = v.q1==='pass' && v.q2==='pass' && v.q3==='pass';
+  const l2 = document.getElementById('l2card_'+n);
+  if (l2 && allPass) l2.classList.add('visible');
+}
+
+// ─── VALIDATION LAYER 2 — full standard ────────────────────────────────────
+async function validateStandard(n) {
+  const s   = S[n], sec = secOf(n);
+  const q1  = document.getElementById(`q1_${n}`)?.value?.trim()||'';
+  const q2  = document.getElementById(`q2_${n}`)?.value?.trim()||'';
+  const q3  = document.getElementById(`q3_${n}`)?.value?.trim()||'';
+  const rt  = document.querySelector(`input[name="rt_${n}"]:checked`)?.value||null;
+  const fls = (_files[n]||[]).map(f=>f.name);
+
+  const btn = document.getElementById('l2btn_'+n);
+  btn.disabled = true;
+  showL2Result(n, 'checking', null, 'Analizando evidencia completa…', []);
+
+  try {
+    const res = await fetch(WH_L2, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        std_number: n, std_text: s.f, std_title: s.t,
+        section: sec.nameES,
+        q1: s.q[0], a1: q1,
+        q2: s.q[1], a2: q2,
+        q3: s.q[2], a3: q3,
+        files: fls, rating: rt ? parseInt(rt) : null
+      })
+    });
+    const data = await res.json();
+    _val[n].l2 = data.pass ? 'pass' : 'fail';
+    showL2Result(n, _val[n].l2, data.score, data.feedback||'', data.improvements||[]);
+
+    // Enable/disable submit button
+    const sb = document.getElementById('savebtn_'+n);
+    if (sb) {
+      if (data.pass) {
+        sb.disabled = false;
+        sb.removeAttribute('style');
+      } else {
+        sb.disabled = true;
+        sb.style.cssText = 'background:var(--ash);color:var(--light-sl);cursor:not-allowed';
+      }
+    }
+  } catch(e) {
+    _val[n].l2 = null;
+    showL2Result(n, 'fail', null, 'Error de conexión. Intenta de nuevo.', []);
+  }
+  btn.disabled = false;
+}
+
+function showL2Result(n, state, score, feedback, improvements) {
+  const el = document.getElementById('l2res_'+n);
+  if (!el) return;
+  const RL4 = ['','Raramente','En desarrollo','Frecuentemente','Consistentemente'];
+  const scoreHtml = score ? `<div class="l2-score">Score: ${score}/4 — ${RL4[score]||''}</div>` : '';
+  const impHtml   = improvements.length
+    ? `<ul class="l2-improvements">${improvements.map(i=>`<li>${i}</li>`).join('')}</ul>` : '';
+  const headers   = {pass:'✓ Evidencia aprobada', fail:'⚠ Requiere ajustes', checking:'Analizando…'};
+  el.className    = `l2-result ${state} show`;
+  el.innerHTML    = `<strong>${headers[state]||''}</strong>${scoreHtml}<div style="margin-top:6px">${feedback}</div>${impHtml}`;
 }
 
 // ─── PDF GENERATOR ─────────────────────────────────────────────────────────
