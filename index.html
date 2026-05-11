@@ -560,9 +560,26 @@ const S = {
 
 const RL = {1:'Raramente',2:'Ocasionalmente',3:'Regularmente',4:'Consistentemente'};
 
-// ─── WEBHOOKS ──────────────────────────────────────────────────────────────
+// ─── MOCK VALIDATION (replace with n8n webhooks in production) ─────────────
+const MOCK_MODE = true;
 const WH_L1 = 'https://n8n-ntcue-u59578.vm.elestio.app/webhook/cognia-validate-field';
 const WH_L2 = 'https://n8n-ntcue-u59578.vm.elestio.app/webhook/cognia-validate-standard';
+
+async function mockL1(answer) {
+  await new Promise(r => setTimeout(r, 900 + Math.random()*600));
+  if (answer.length < 20) return { pass: false, feedback: 'La respuesta es demasiado breve. Incluye información concreta: fechas, documentos o ejemplos específicos.' };
+  if (answer.length < 60) return { pass: false, feedback: 'Agrega más detalle. Menciona el documento o acción concreta que respalda esta práctica en tu institución.' };
+  return { pass: true, feedback: 'Respuesta con evidencia concreta y relevante para el estándar.' };
+}
+
+async function mockL2(payload) {
+  await new Promise(r => setTimeout(r, 1400 + Math.random()*800));
+  const lens = [payload.a1, payload.a2, payload.a3].map(a => (a||'').length);
+  const avg = lens.reduce((a,b)=>a+b,0) / 3;
+  if (avg < 40) return { pass: false, score: 1, feedback: 'El conjunto de respuestas carece de especificidad. Las tres respuestas deben incluir ejemplos concretos, datos o documentos que demuestren la práctica.', improvements: ['Menciona el nombre del documento o política específica en R1.', 'Incluye datos cuantitativos o fechas en al menos una respuesta.'] };
+  if (avg < 100) return { pass: false, score: 2, feedback: 'Las respuestas tienen sustancia básica pero les falta profundidad para demostrar el estándar de forma sólida ante evaluadores externos.', improvements: ['R2 y R3 necesitan ejemplos más específicos con resultados observables.'] };
+  return { pass: true, score: 3, feedback: 'El conjunto de evidencias demuestra el estándar de forma coherente. Las tres respuestas se complementan y muestran práctica institucional real.', improvements: [] };
+}
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let curSec = null, curStd = null, navHist = ['home'];
@@ -852,18 +869,23 @@ async function validateField(n, idx) {
   showFieldResult(n, idx, 'checking', 'Analizando…');
 
   try {
-    const res = await fetch(WH_L1, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        std_number: n,
-        std_text:   S[n].f,
-        std_title:  S[n].t,
-        question:   S[n].q[idx-1],
-        answer
-      })
-    });
-    const data = await res.json();
+    let data;
+    if (MOCK_MODE) {
+      data = await mockL1(answer);
+    } else {
+      const res = await fetch(WH_L1, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          std_number: n,
+          std_text:   S[n].f,
+          std_title:  S[n].t,
+          question:   S[n].q[idx-1],
+          answer
+        })
+      });
+      data = await res.json();
+    }
     _val[n]['q'+idx] = data.pass ? 'pass' : 'fail';
     showFieldResult(n, idx, _val[n]['q'+idx], data.feedback || '');
     checkL1Complete(n);
@@ -906,19 +928,24 @@ async function validateStandard(n) {
   showL2Result(n, 'checking', null, 'Analizando evidencia completa…', []);
 
   try {
-    const res = await fetch(WH_L2, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        std_number: n, std_text: s.f, std_title: s.t,
-        section: sec.nameES,
-        q1: s.q[0], a1: q1,
-        q2: s.q[1], a2: q2,
-        q3: s.q[2], a3: q3,
-        files: fls, rating: rt ? parseInt(rt) : null
-      })
-    });
-    const data = await res.json();
+    let data;
+    if (MOCK_MODE) {
+      data = await mockL2({ std_number: n, a1: q1, a2: q2, a3: q3 });
+    } else {
+      const res = await fetch(WH_L2, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          std_number: n, std_text: s.f, std_title: s.t,
+          section: sec.nameES,
+          q1: s.q[0], a1: q1,
+          q2: s.q[1], a2: q2,
+          q3: s.q[2], a3: q3,
+          files: fls, rating: rt ? parseInt(rt) : null
+        })
+      });
+      data = await res.json();
+    }
     _val[n].l2 = data.pass ? 'pass' : 'fail';
     showL2Result(n, _val[n].l2, data.score, data.feedback||'', data.improvements||[]);
 
