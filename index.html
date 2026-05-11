@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Evidencias Cognia — Centro Escolar Balam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0612;
+  --surface: #110d1c;
+  --surface-2: #18122a;
+  --border: #2a2235;
+  --border-light: #3a3150;
+  --text: #e8e0f0;
+  --text-muted: #8b7fa0;
+  --text-dim: #5a5070;
+
+  --c1: #1A8A8A;   /* Culture — teal */
+  --c1-light: #2CC4C4;
+  --c1-bg: rgba(26,138,138,.12);
+  --c2: #7B68EE;   /* Leadership — purple */
+  --c2-light: #a89cf5;
+  --c2-bg: rgba(123,104,238,.12);
+  --c3: #F4A261;   /* Engagement — amber */
+  --c3-light: #f7c08a;
+  --c3-bg: rgba(244,162,97,.12);
+  --c4: #2A9D8F;   /* Growth — green */
+  --c4-light: #52c4b5;
+  --c4-bg: rgba(42,157,143,.12);
+
+  --font-h: 'Sora', sans-serif;
+  --font-b: 'Manrope', sans-serif;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --transition: .18s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────── */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.page { display: none; flex-direction: column; flex: 1; }
+.page.active { display: flex; }
+
+.container { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 20px; }
+.container-wide { width: 100%; max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+/* ─── TOPBAR ──────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10, 6, 18, .92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.topbar-logo {
+  font-family: var(--font-h);
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+}
+.topbar-logo .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--c1-light);
+  flex-shrink: 0;
+}
+
+.topbar-breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-muted);
+  overflow: hidden;
+}
+.topbar-breadcrumb span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-breadcrumb .sep { color: var(--text-dim); flex-shrink: 0; }
+.topbar-breadcrumb .current { color: var(--text); }
+
+.topbar-back {
+  margin-left: auto; flex-shrink: 0;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: var(--radius-sm);
+  padding: 6px 12px; font-size: 13px; font-family: var(--font-b);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: var(--transition);
+}
+.topbar-back:hover { color: var(--text); border-color: var(--border-light); }
+.topbar-back svg { width: 14px; height: 14px; }
+
+/* ─── HOME PAGE ───────────────────────────────────────── */
+.home-hero {
+  padding: 48px 20px 32px;
+  text-align: center;
+}
+.home-hero h1 {
+  font-family: var(--font-h);
+  font-size: clamp(22px, 5vw, 32px);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+.home-hero p {
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 480px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+}
+
+.cycle-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 6px 14px;
+  font-size: 12px; color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.cycle-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c1-light); }
+
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 0 20px 48px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+.section-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--card-color);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.section-card:hover {
+  border-color: var(--border-light);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.3);
+}
+
+.section-card-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--card-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 16px;
+}
+.section-card h3 {
+  font-family: var(--font-h);
+  font-size: 16px; font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--card-color-light);
+}
+.section-card p {
+  font-size: 13px; color: var(--text-muted);
+  line-height: 1.55; margin-bottom: 20px;
+}
+.section-card-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--text-dim);
+}
+.section-card-meta .standards-count {
+  background: var(--card-bg);
+  color: var(--card-color);
+  border-radius: 100px; padding: 3px 10px;
+  font-weight: 600; font-size: 12px;
+}
+
+.progress-bar {
+  width: 100%; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--card-color);
+  transition: width .4s ease;
+}
+.progress-label {
+  font-size: 11px; color: var(--text-dim);
+  margin-top: 6px; text-align: right;
+}
+
+/* ─── SECTION PAGE ────────────────────────────────────── */
+.section-header {
+  padding: 32px 20px 24px;
+  max-width: 720px; margin: 0 auto; width: 100%;
+}
+.section-header-top {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+.section-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: var(--card-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.section-header h2 {
+  font-family: var(--font-h); font-size: clamp(18px, 4vw, 24px);
+  font-weight: 700; color: var(--card-color-light);
+}
+.section-header .desc {
+  font-size: 14px; color: var(--text-muted); line-height: 1.6;
+}
+
+.standards-list {
+  padding: 0 20px 48px;
+  max-width: 720px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.standard-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.standard-row:hover {
+  border-color: var(--border-light);
+  background: var(--surface-2);
+}
+.standard-row.completed { border-color: var(--card-color); }
+.standard-row.completed .std-num { background: var(--card-color); color: #000; }
+
+.std-num {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--border); color: var(--text-muted);
+  font-family: var(--font-h); font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+  transition: var(--transition);
+}
+.std-body { flex: 1; min-width: 0; }
+.std-body h4 {
+  font-family: var(--font-h); font-size: 14px; font-weight: 600;
+  margin-bottom: 4px; line-height: 1.35;
+}
+.std-body p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+.std-status {
+  flex-shrink: 0; margin-top: 2px;
+  font-size: 11px; padding: 3px 9px;
+  border-radius: 100px; font-weight: 600;
+}
+.std-status.done { background: var(--card-bg); color: var(--card-color); }
+.std-status.pending { background: var(--border); color: var(--text-dim); }
+
+.std-chevron {
+  flex-shrink: 0; color: var(--text-dim); margin-top: 5px;
+}
+.std-chevron svg { width: 16px; height: 16px; }
+
+/* ─── FORM PAGE ───────────────────────────────────────── */
+.form-header {
+  padding: 32px 20px 24px;
+  max-width: 720px; margin: 0 auto; width: 100%;
+}
+.form-header .std-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card-bg); color: var(--card-color);
+  border-radius: 100px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600;
+  margin-bottom: 14px;
+}
+.form-header h2 {
+  font-family: var(--font-h);
+  font-size: clamp(17px, 4vw, 22px);
+  font-weight: 700; line-height: 1.3;
+  margin-bottom: 10px;
+}
+.form-header .full-text {
+  font-size: 14px; color: var(--text-muted); line-height: 1.6;
+  padding: 14px 16px;
+  background: var(--surface); border-left: 3px solid var(--card-color);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.form-body {
+  padding: 0 20px 48px;
+  max-width: 720px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.form-card-header {
+  padding: 16px 20px 0;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.q-num {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: var(--card-bg); color: var(--card-color);
+  font-size: 12px; font-weight: 700; font-family: var(--font-h);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.form-card-header label {
+  font-size: 14px; font-weight: 600; line-height: 1.45;
+  color: var(--text); cursor: pointer;
+}
+.form-card-body { padding: 12px 20px 20px; }
+
+textarea, input[type="text"] {
+  width: 100%; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-family: var(--font-b); font-size: 14px;
+  padding: 12px 14px; resize: vertical; min-height: 100px;
+  transition: border-color var(--transition);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+textarea:focus, input[type="text"]:focus {
+  outline: none; border-color: var(--card-color);
+}
+textarea::placeholder, input::placeholder { color: var(--text-dim); }
+
+/* Rating */
+.rating-group {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-top: 10px;
+}
+.rating-option { position: relative; }
+.rating-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+.rating-option label {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 12px 6px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: var(--transition); text-align: center;
+}
+.rating-option input:checked + label {
+  background: var(--card-bg); border-color: var(--card-color);
+}
+.rating-level {
+  font-family: var(--font-h); font-size: 18px; font-weight: 700;
+  color: var(--card-color);
+}
+.rating-desc { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+
+/* File upload */
+.upload-area {
+  margin-top: 10px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.upload-area:hover { border-color: var(--card-color); background: var(--card-bg); }
+.upload-area.has-file { border-style: solid; border-color: var(--card-color); background: var(--card-bg); }
+.upload-area input { display: none; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; color: var(--text-muted); }
+.upload-text strong { color: var(--card-color); }
+.upload-filename { font-size: 13px; color: var(--text); font-weight: 600; margin-top: 4px; }
+.upload-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+/* Evidence type badge */
+.evidence-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--border); color: var(--text-muted);
+  border-radius: 100px; padding: 3px 10px;
+  font-size: 11px; margin-top: 8px;
+}
+
+/* Submit */
+.form-actions {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.btn-primary {
+  flex: 1; min-width: 160px;
+  background: var(--card-color); color: #000;
+  border: none; border-radius: var(--radius-sm);
+  padding: 14px 20px; font-family: var(--font-b);
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-secondary {
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-muted); border-radius: var(--radius-sm);
+  padding: 14px 20px; font-family: var(--font-b);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: var(--transition);
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--border-light); }
+
+/* ─── SUCCESS TOAST ───────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--surface);
+  border: 1px solid var(--card-color, var(--c4));
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-size: 14px; color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+  z-index: 999; white-space: nowrap;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast-icon { font-size: 18px; }
+
+/* ─── OVERALL PROGRESS BAR ───────────────────────────── */
+.global-progress {
+  padding: 16px 20px 0;
+  max-width: 960px; margin: 0 auto; width: 100%;
+}
+.global-progress-label {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 6px;
+}
+.global-progress-bar {
+  height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.global-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--c1-light), var(--c4-light));
+  border-radius: 3px; transition: width .6s ease;
+}
+
+/* ─── EMPTY STATE ─────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ─── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 600px) {
+  .sections-grid { grid-template-columns: 1fr; }
+  .rating-group { grid-template-columns: repeat(2, 1fr); }
+  .topbar-breadcrumb { display: none; }
+  .form-actions { flex-direction: column; }
+  .btn-primary, .btn-secondary { width: 100%; }
+}
+@media (min-width: 601px) and (max-width: 900px) {
+  .sections-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-logo" onclick="navigate('home')">
+    <div class="dot"></div>
+    Balam · Cognia
+  </div>
+  <div class="topbar-breadcrumb" id="breadcrumb"></div>
+  <button class="topbar-back" id="backBtn" onclick="goBack()" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Atrás
+  </button>
+</header>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="cycle-badge"><div class="dot"></div>Ciclo escolar 2025–2026</div>
+    <h1>Banco de Evidencias<br>Cognia</h1>
+    <p>Selecciona una característica clave para enviar evidencias de tus estándares correspondientes.</p>
+  </div>
+  <div class="global-progress" id="globalProgressBar">
+    <div class="global-progress-label">
+      <span>Progreso general</span>
+      <span id="globalProgressText">0 / 30 estándares</span>
+    </div>
+    <div class="global-progress-bar">
+      <div class="global-progress-fill" id="globalProgressFill" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="sections-grid" id="sectionsGrid"></div>
+</div>
+
+<!-- SECTION PAGE -->
+<div class="page" id="page-section">
+  <div class="section-header" id="sectionHeader"></div>
+  <div class="standards-list" id="standardsList"></div>
+</div>
+
+<!-- FORM PAGE -->
+<div class="page" id="page-form">
+  <div class="form-header" id="formHeader"></div>
+  <div class="form-body" id="formBody"></div>
+</div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Evidencia guardada correctamente</span>
+</div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+
+const SECTIONS = [
+  {
+    id: 1, key: 'culture',
+    name: 'Culture of Learning',
+    nameES: 'Cultura de Aprendizaje',
+    icon: '🏫',
+    desc: 'La institución cultiva y sostiene una cultura saludable para el aprendizaje, donde todos los actores se sienten parte del propósito y los valores institucionales.',
+    color: 'var(--c1)', colorLight: 'var(--c1-light)', colorBg: 'var(--c1-bg)',
+    standards: [1,2,3,4,5,6]
+  },
+  {
+    id: 2, key: 'leadership',
+    name: 'Leadership for Learning',
+    nameES: 'Liderazgo para el Aprendizaje',
+    icon: '🧭',
+    desc: 'Los líderes influyen y mejoran todos los aspectos de la institución, guiando la mejora continua y el desarrollo del personal en función del alumno.',
+    color: 'var(--c2)', colorLight: 'var(--c2-light)', colorBg: 'var(--c2-bg)',
+    standards: [7,8,9,10,11,12,13,14,15]
+  },
+  {
+    id: 3, key: 'engagement',
+    name: 'Engagement of Learning',
+    nameES: 'Involucramiento en el Aprendizaje',
+    icon: '💡',
+    desc: 'Todos los alumnos participan con confianza y autonomía en el proceso de aprendizaje, desarrollando habilidades para toda la vida.',
+    color: 'var(--c3)', colorLight: 'var(--c3-light)', colorBg: 'var(--c3-bg)',
+    standards: [16,17,18,19,20,21,22,23]
+  },
+  {
+    id: 4, key: 'growth',
+    name: 'Growth in Learning',
+    nameES: 'Crecimiento en el Aprendizaje',
+    icon: '📈',
+    desc: 'La institución genera impacto positivo medible en los alumnos, preparándolos para las siguientes etapas de su trayectoria educativa y profesional.',
+    color: 'var(--c4)', colorLight: 'var(--c4-light)', colorBg: 'var(--c4-bg)',
+    standards: [24,25,26,27,28,29,30]
+  }
+];
+
+const STANDARDS = {
+  1: {
+    title: 'Cultura libre de sesgo, equidad e inclusión',
+    full: 'Leaders cultivate and sustain a culture that demonstrates respect, fairness, equity, and inclusion, and is free from bias.',
+    evidence: 'Documento/política, datos de encuesta, narrativa con ejemplo.',
+    questions: [
+      '¿El handbook del personal documenta expectativas de respeto, equidad e inclusión? ¿Se revisó este ciclo?',
+      '¿Se analizaron encuestas de percepción de stakeholders este ciclo? ¿Qué hallazgos se comunicaron al equipo?',
+      '¿Se utilizan los resultados de evaluación de programas para desarrollar nuevas iniciativas institucionales? Describe una.',
+      'Adjunta evidencia (política, acta de reunión, encuesta procesada) que demuestre prácticas libres de sesgo en la toma de decisiones.'
+    ]
+  },
+  2: {
+    title: 'Bienestar del alumno en los principios guía',
+    full: 'Learners\' well-being is at the heart of the institution\'s guiding principles such as mission, purpose, and beliefs.',
+    evidence: 'Datos de encuesta, planeación, registro de observación.',
+    questions: [
+      '¿Has analizado datos de percepción de alumnos sobre apoyo académico o no académico este ciclo? ¿Qué encontraste?',
+      '¿La misión y visión de la escuela orientan tus decisiones de aula? Da un ejemplo concreto.',
+      '¿Tus alumnos tienen acceso a actividades extracurriculares o cocurriculares? ¿Participan activamente?',
+      'Adjunta registros de observación de clase que muestren diferenciación, involucramiento o remediación de contenido.'
+    ]
+  },
+  3: {
+    title: 'Involucramiento activo de stakeholders',
+    full: 'Leaders actively engage stakeholders to support the institution\'s priorities and guiding principles that promote learners\' academic growth and well-being.',
+    evidence: 'Acta de reunión, plan de mejora, política documentada.',
+    questions: [
+      '¿Participas en reuniones donde se analizan datos de necesidades de alumnos para definir áreas de enfoque?',
+      '¿Tienes evidencia de colaboración con padres u otros stakeholders para avanzar prioridades identificadas?',
+      '¿El plan de mejora de tu área identifica prioridades basadas en datos de alumnos? ¿Puedes describir el plan?',
+      'Adjunta acta, encuesta o documento del plan de mejora que evidencie participación sistémica de stakeholders.'
+    ]
+  },
+  4: {
+    title: 'Relaciones positivas estructuradas',
+    full: 'Learners benefit from a formal structure that fosters positive relationships with peers and adults.',
+    evidence: 'Descripción de programa, datos de encuesta, muestra de material.',
+    questions: [
+      '¿Existe un programa formal de tutoría o acompañamiento al alumno en tu clase o en la escuela?',
+      '¿Qué acciones implementas para que alumnos y adultos interactúen con respeto, confianza y apoyo mutuo?',
+      '¿Se mide la efectividad de las relaciones positivas mediante encuestas u otros instrumentos? ¿Tienes datos?',
+      'Adjunta material, actividad o programa que apoye relaciones positivas entre alumnos y entre alumnos y adultos.'
+    ]
+  },
+  5: {
+    title: 'Colegialidad y colaboración profesional',
+    full: 'Professional staff members embrace effective collegiality and collaboration in support of learners.',
+    evidence: 'Acta de PLC, plan de aprendizaje profesional, política en handbook.',
+    questions: [
+      '¿Con qué frecuencia te reúnes con colegas para analizar datos de aprendizaje y generar un plan de acción?',
+      '¿Existe un plan de aprendizaje profesional documentado que guíe las reuniones colaborativas?',
+      '¿Participas en una comunidad de aprendizaje profesional (PLC o equivalente)? ¿Qué temas trabajaron este mes?',
+      'Adjunta acta de reunión colaborativa o extracto del plan de aprendizaje profesional vigente.'
+    ]
+  },
+  6: {
+    title: 'Apoyo para fortalecer la práctica docente',
+    full: 'Professional staff members receive the support they need to strengthen their professional practice.',
+    evidence: 'Descripción del programa de mentoría, encuesta de recursos, registro de seguimiento.',
+    questions: [
+      '¿Participas en un programa formal de mentoría o coaching basado en datos de observación de clase?',
+      '¿La institución documenta y rastrea el impacto del programa de mentoría en tu práctica docente?',
+      '¿Tienes acceso a recursos personalizados (materiales, tiempo, apoyo) para fortalecer tu práctica?',
+      'Adjunta evidencia del programa de mentoría o coaching: descripción, formato de seguimiento o registro de sesión.'
+    ]
+  },
+  7: {
+    title: 'Proceso de mejora continua',
+    full: 'Leaders guide professional staff members in the continuous improvement process focused on learners\' experiences and needs.',
+    evidence: 'Plan estratégico, proceso documentado de análisis de datos, registro de participación.',
+    questions: [
+      '¿Participas activamente en las fases del proceso de mejora continua (envisión, planeación, implementación, evaluación)?',
+      '¿Tienes acceso a análisis de datos de desempeño estudiantil que informan el plan estratégico de tu área?',
+      '¿Contribuyes con datos o perspectivas a la identificación de prioridades de mejora institucional?',
+      'Adjunta evidencia del plan estratégico de mejora de tu área: objetivos, actividades, métricas y responsables.'
+    ]
+  },
+  8: {
+    title: 'Gobierno institucional comprometido',
+    full: 'The governing authority demonstrates a commitment to learners by collaborating with leaders to uphold the institution\'s priorities and to drive continuous improvement.',
+    evidence: 'Código de ética, políticas documentadas, narrativa de aplicación.',
+    questions: [
+      '¿Conoces el código de ética institucional y puedes dar un ejemplo de cómo lo aplicas en tu práctica?',
+      '¿Las políticas de no discriminación están documentadas, accesibles y comunicadas a toda la comunidad?',
+      '¿Se tienen políticas escritas sobre IA, créditos, calificaciones y graduación? ¿Las conoces y aplicas?',
+      'Adjunta el código de ética, alguna política institucional clave o evidencia de su comunicación al personal.'
+    ]
+  },
+  9: {
+    title: 'Cultivo del liderazgo en la comunidad',
+    full: 'Leaders cultivate effective individual and collective leadership among stakeholders.',
+    evidence: 'Descripción de rol de liderazgo, reconocimiento recibido, registro de participación en comité.',
+    questions: [
+      '¿Tienes oportunidades formales o informales de liderazgo en la institución? Describe cuál o cuáles ejerces.',
+      '¿La institución reconoce activamente tu potencial de liderazgo y te crea condiciones para desarrollarlo?',
+      '¿Participas en comités, grupos de trabajo o iniciativas con poder de decisión sobre mejoras para los alumnos?',
+      'Adjunta evidencia de tu rol de liderazgo: invitación, minuta de comité, proyecto liderado o reconocimiento.'
+    ]
+  },
+  10: {
+    title: 'Reclutamiento, supervisión y evaluación del personal',
+    full: 'Leaders demonstrate expertise in recruiting, supervising, and evaluating professional staff members to optimize learning.',
+    evidence: 'Instrumento de evaluación docente, reporte de observación, expediente de credenciales.',
+    questions: [
+      '¿El proceso de evaluación docente es documentado, transparente y basado en criterios claros?',
+      '¿Recibes retroalimentación periódica de observaciones de clase con rúbricas y criterios explícitos?',
+      '¿Tu expediente institucional tiene actualizadas tus credenciales y calificaciones profesionales?',
+      'Adjunta tu reporte de observación de clase más reciente o evidencia de tus credenciales profesionales actualizadas.'
+    ]
+  },
+  11: {
+    title: 'Estructuras institucionales en entornos estables y cambiantes',
+    full: 'Leaders create and maintain institutional structures and processes that support learners and staff members in both stable and changing environments.',
+    evidence: 'Protocolo documentado, comunicado institucional, procedimiento de contingencia.',
+    questions: [
+      '¿Existen procedimientos documentados para situaciones de cambio, crisis o contingencia en la institución?',
+      '¿Tienes los recursos y apoyos necesarios para mantener continuidad de aprendizaje en circunstancias atípicas?',
+      '¿La comunicación institucional te mantiene informado y orientado durante períodos de cambio o transición?',
+      'Adjunta un protocolo, procedimiento o comunicado que evidencie estructuras de apoyo ante situaciones de cambio.'
+    ]
+  },
+  12: {
+    title: 'Currículo e instrucción alineados, inclusivos y efectivos',
+    full: 'Professional staff members implement curriculum and instruction that are aligned for relevancy, inclusion, and effectiveness.',
+    evidence: 'Planeación didáctica, mapa curricular, datos de efectividad.',
+    questions: [
+      '¿Tu planeación didáctica está alineada con los objetivos curriculares del nivel y materia que impartes?',
+      '¿El currículo que implementas valora e integra la diversidad cultural y de capacidades de tus alumnos?',
+      '¿Tienes datos o retroalimentación que demuestren que tu instrucción es efectiva para los alumnos?',
+      'Adjunta una planeación didáctica que evidencie alineación curricular, inclusión y relevancia para el alumno.'
+    ]
+  },
+  13: {
+    title: 'Personal calificado en apoyo de la misión',
+    full: 'Qualified personnel instruct and assist learners and each other in support of the institution\'s mission, purpose, and beliefs.',
+    evidence: 'Credenciales, certificaciones, narrativa de coherencia con misión.',
+    questions: [
+      '¿Tus credenciales y calificaciones profesionales cumplen con los requisitos del puesto que desempeñas?',
+      '¿Apoyas activamente a tus colegas en el proceso de enseñanza-aprendizaje (no solo a los alumnos)?',
+      '¿Tu práctica docente diaria demuestra coherencia con la misión, propósito y valores de la institución?',
+      'Adjunta evidencia de preparación académica actualizada: título, certificación o constancia de formación continua.'
+    ]
+  },
+  14: {
+    title: 'Recursos de información que amplían el aprendizaje',
+    full: 'Curriculum and instruction are augmented by reliable information resources and materials that advance learning and support learners\' personal interests.',
+    evidence: 'Lista de recursos, muestra de planeación con referencias, registro de uso de biblioteca/digital.',
+    questions: [
+      '¿Utilizas recursos de información confiables (biblioteca, bases de datos, materiales digitales) en tu instrucción?',
+      '¿Los recursos que usas también apoyan los intereses personales de tus alumnos más allá del currículo obligatorio?',
+      '¿Tienes acceso a materiales suficientes y actualizados para avanzar el aprendizaje en tu materia?',
+      'Adjunta tu lista de recursos habituales, muestra de planeación con fuentes referenciadas o registro de uso de biblioteca.'
+    ]
+  },
+  15: {
+    title: 'Asignación equitativa de recursos',
+    full: 'Learners\' needs drive the equitable allocation and management of human, material, digital, and fiscal resources.',
+    evidence: 'Solicitud de recursos, comparativo de distribución, narrativa con ejemplo.',
+    questions: [
+      '¿Los recursos disponibles en tu aula (materiales, tecnología, apoyo humano) responden a las necesidades de tus alumnos?',
+      '¿Existe un mecanismo para solicitar recursos adicionales cuando los alumnos lo necesitan?',
+      '¿La distribución de recursos en tu área o grado es equitativa para todos los grupos de alumnos?',
+      'Adjunta evidencia de que las necesidades de los alumnos guiaron alguna decisión de asignación de recursos este ciclo.'
+    ]
+  },
+  16: {
+    title: 'Currículo culturalmente diverso',
+    full: 'Learners experience curriculum and instruction that emphasize the value of diverse cultures, backgrounds, and abilities.',
+    evidence: 'Planeación con contenido diverso, material de clase, fotografía de proyecto.',
+    questions: [
+      '¿Tu currículo incluye perspectivas, textos o ejemplos de diversas culturas, contextos y capacidades?',
+      '¿Integras materiales que reflejan la diversidad real de tus alumnos (origen, habilidad, experiencia de vida)?',
+      '¿Utilizas estrategias de instrucción diferenciada para abordar distintos niveles de habilidad en el mismo grupo?',
+      'Adjunta actividad, proyecto o material que demuestre la incorporación de diversidad cultural o de capacidades.'
+    ]
+  },
+  17: {
+    title: 'Oportunidades equitativas de aprendizaje',
+    full: 'Learners have equitable opportunities to realize their learning potential.',
+    evidence: 'Registro de seguimiento individual, evidencia de diferenciación, narrativa de ajuste.',
+    questions: [
+      '¿Desarrollas relaciones individuales con cada alumno para entender sus necesidades de bienestar y aprendizaje?',
+      '¿Ofreces apoyo académico diferenciado a los alumnos que presentan dificultades o necesidades específicas?',
+      '¿Tienes registros del progreso individual de cada alumno? ¿Los revisas y actúas en consecuencia?',
+      'Adjunta registro de seguimiento individual, muestra de diferenciación o narrativa de un ajuste realizado para un alumno.'
+    ]
+  },
+  18: {
+    title: 'Habilidades para la vida (creatividad, colaboración, design thinking)',
+    full: 'Learners are immersed in an environment that fosters lifelong skills including creativity, curiosity, risk taking, collaboration, and design thinking.',
+    evidence: 'Planeación de proyecto, rúbrica, foto o muestra de trabajo de alumno.',
+    questions: [
+      '¿Diseñas actividades que requieran creatividad, curiosidad, toma de riesgos o resolución de problemas?',
+      '¿El ambiente de tu clase es seguro para cometer errores y aprender de ellos (cultura de growth mindset)?',
+      '¿Tus alumnos trabajan en equipos para explorar problemas, diseñar soluciones o crear productos?',
+      'Adjunta evidencia de un proyecto o actividad que fomente habilidades del siglo XXI: foto, rúbrica o muestra de trabajo.'
+    ]
+  },
+  19: {
+    title: 'Voz del alumno y autonomía de aprendizaje',
+    full: 'Learners are immersed in an environment that promotes and respects student voice and responsibility for their learning.',
+    evidence: 'Instrumento de retroalimentación de alumno, narrativa de decisión basada en voz estudiantil.',
+    questions: [
+      '¿Tus alumnos tienen opciones sobre cómo aprender o cómo demostrar lo que saben?',
+      '¿Existe algún mecanismo (encuesta, retroalimentación directa, etc.) para que los alumnos expresen su opinión sobre la clase?',
+      '¿Cómo fomentas que los alumnos tomen responsabilidad activa y consciente de su propio aprendizaje?',
+      'Adjunta instrumento de retroalimentación de alumno, o describe y evidencia una decisión que tomaste basada en su voz.'
+    ]
+  },
+  20: {
+    title: 'Autoconfianza y amor por el aprendizaje',
+    full: 'Learners engage in experiences that promote and develop their self-confidence and love of learning.',
+    evidence: 'Narrativa de estrategia, comentario de alumno o padre, fotografía de clase activa.',
+    questions: [
+      '¿Qué estrategias concretas utilizas para construir la autoconfianza de tus alumnos en el proceso de aprendizaje?',
+      '¿Tus alumnos muestran curiosidad, motivación intrínseca o entusiasmo hacia los temas que trabajas?',
+      '¿Diseñas experiencias que celebran el logro y el esfuerzo, no solo el resultado correcto?',
+      'Adjunta observación, comentario de alumno o padre, o fotografía que refleje que los alumnos disfrutan aprender.'
+    ]
+  },
+  21: {
+    title: 'Instrucción de altas expectativas centrada en el alumno',
+    full: 'Instruction is characterized by high expectations and learner-centered practices.',
+    evidence: 'Planeación diferenciada, narrativa de expectativas, registro de observación.',
+    questions: [
+      '¿Las actividades de tu clase están diseñadas en función de las necesidades e intereses individuales de los alumnos?',
+      '¿Mantienes altas expectativas para todos los alumnos, incluyendo a los que presentan mayores dificultades?',
+      '¿Tu instrucción promueve la autonomía y la eficacia personal de los alumnos?',
+      'Adjunta planeación o registro de clase que demuestre instrucción centrada en el alumno con altas expectativas.'
+    ]
+  },
+  22: {
+    title: 'Instrucción monitoreada y ajustada individualmente',
+    full: 'Instruction is monitored and adjusted to advance and deepen individual learners\' knowledge and understanding of the curriculum.',
+    evidence: 'Hoja de seguimiento formativo, plan de ajuste instruccional, reflexión docente.',
+    questions: [
+      '¿Utilizas evaluaciones formativas (no solo sumativas) para monitorear el progreso individual de cada alumno?',
+      '¿Ajustas tu instrucción en tiempo real o entre clases según la respuesta de los alumnos?',
+      '¿Involucras a los alumnos en identificar sus propias metas de aprendizaje y monitorear su progreso?',
+      'Adjunta registro de ajuste instruccional basado en datos: cambio de estrategia documentado o reflexión de clase.'
+    ]
+  },
+  23: {
+    title: 'Integración pedagógica de recursos digitales',
+    full: 'Professional staff members integrate digital resources that deepen and advance learners\' engagement with instruction and stimulate their curiosity.',
+    evidence: 'Lista de herramientas con propósito pedagógico, captura de pantalla, narrativa de impacto.',
+    questions: [
+      '¿Integras herramientas o recursos digitales en tu instrucción de forma regular? ¿Cuáles y con qué frecuencia?',
+      '¿Los recursos digitales que usas profundizan el aprendizaje (no solo sustituyen actividades analógicas)?',
+      '¿Qué plataformas, apps o herramientas digitales usas y cuál es el propósito pedagógico de cada una?',
+      'Adjunta captura de pantalla, producto digital de alumno o narrativa de impacto del uso de tecnología en tu clase.'
+    ]
+  },
+  24: {
+    title: 'Decisiones basadas en datos de múltiples fuentes',
+    full: 'Leaders use data and input from a variety of sources to make decisions for learners\' and staff members\' growth and well-being.',
+    evidence: 'Reporte de datos, captura de dashboard, narrativa de decisión basada en datos.',
+    questions: [
+      '¿Aportas datos de tu aula (rendimiento, percepciones, observaciones) al proceso institucional de toma de decisiones?',
+      '¿Utilizas múltiples fuentes de datos (académicos, emocionales, contextuales) para entender las necesidades de tus alumnos?',
+      '¿Tienes acceso a análisis o dashboards institucionales que apoyen tus decisiones de planeación?',
+      'Adjunta reporte, captura de dashboard o narrativa que muestre cómo los datos informaron una decisión concreta.'
+    ]
+  },
+  25: {
+    title: 'Investigación-acción docente',
+    full: 'Leaders promote action research by professional staff members to improve their practice and advance learning.',
+    evidence: 'Protocolo de investigación-acción, reporte de hallazgos, reflexión docente.',
+    questions: [
+      '¿Has realizado o participado en un proyecto de investigación-acción en tu práctica docente este ciclo?',
+      '¿La institución fomenta una cultura de indagación, reflexión y diálogo sobre problemas reales de aprendizaje?',
+      '¿Tienes documentado un ciclo: identificación de área de mejora → recopilación de datos → implementación → resultados?',
+      'Adjunta protocolo, reporte o reflexión docente de tu proceso de investigación-acción con hallazgos concretos.'
+    ]
+  },
+  26: {
+    title: 'Evaluación de programas instruccionales',
+    full: 'Leaders regularly evaluate instructional programs and organizational conditions to improve instruction and advance learning.',
+    evidence: 'Informe de evaluación de programa, acta de revisión curricular, decisión documentada.',
+    questions: [
+      '¿Participas en evaluaciones formales de programas curriculares o instruccionales de la institución?',
+      '¿Se utilizan datos de tendencia y retroalimentación para decidir qué programas conservar, cambiar o reemplazar?',
+      '¿Tienes acceso a un proceso documentado para evaluar la efectividad del currículo en tu área?',
+      'Adjunta informe de evaluación de programa, acta de revisión curricular o decisión documentada de cambio de programa.'
+    ]
+  },
+  27: {
+    title: 'Intervenciones para necesidades académicas y no académicas',
+    full: 'Learners\' diverse academic and non-academic needs are identified and effectively addressed through appropriate interventions.',
+    evidence: 'Plan de intervención, registro de seguimiento, referencia a sistema de niveles.',
+    questions: [
+      '¿Identificas y atiendes las necesidades académicas Y no académicas (emocionales, físicas, sociales) de tus alumnos?',
+      '¿Las intervenciones que implementas están planificadas con base en datos analizados y mejores prácticas?',
+      '¿Existe un sistema formal de niveles de intervención (RTI/MTSS o equivalente) y participas en él?',
+      'Adjunta plan de intervención para un alumno (anonimizado): necesidad identificada, estrategia, seguimiento y resultado.'
+    ]
+  },
+  28: {
+    title: 'Metas individuales: trayectoria educativa y profesional',
+    full: 'With support, learners pursue individual goals including the acquisition of academic and non-academic skills important for their educational futures and careers.',
+    evidence: 'Plan de metas del alumno, actividad de exploración vocacional, narrativa de acompañamiento.',
+    questions: [
+      '¿Realizas conversaciones o actividades formales con tus alumnos para identificar sus talentos y metas?',
+      '¿Los alumnos eligen actividades y monitorean activamente su progreso hacia metas que ellos mismos definieron?',
+      '¿Tienes planes de desarrollo individual, proyectos de carrera o evidencia de metas documentadas por alumno?',
+      'Adjunta plan de metas de un alumno, actividad de exploración vocacional o narrativa de acompañamiento de trayectoria.'
+    ]
+  },
+  29: {
+    title: 'Aprendizaje profesional guiado por necesidades del alumno',
+    full: 'Understanding learners\' needs and interests drives the design, delivery, application, and evaluation of professional learning.',
+    evidence: 'Calendario de PL con justificación pedagógica, evaluación de sesión, narrativa de impacto.',
+    questions: [
+      '¿El aprendizaje profesional que recibes está diseñado en función de las necesidades reales de tus alumnos?',
+      '¿Existe un proceso documentado para seleccionar, implementar y evaluar el aprendizaje profesional en la institución?',
+      '¿Participas en la evaluación del aprendizaje profesional que recibes y tu retroalimentación se incorpora?',
+      'Adjunta calendario de PL con su justificación pedagógica, evaluación de sesión o narrativa de impacto en tu práctica.'
+    ]
+  },
+  30: {
+    title: 'Sistema balanceado de evaluación',
+    full: 'Learners\' progress is measured through a balanced system that includes assessment both for learning and of learning.',
+    evidence: 'Calendario de evaluación, muestra de instrumento formativo y sumativo, registro de uso de datos.',
+    questions: [
+      '¿Utilizas evaluaciones formativas (para el aprendizaje) Y sumativas (del aprendizaje) de forma sistemática?',
+      '¿Colaboras con tus alumnos para determinar su progreso hacia los objetivos de aprendizaje (auto y coevaluación)?',
+      '¿Los datos de evaluación que recopilas informan directamente tu planeación, decisiones y ajustes curriculares?',
+      'Adjunta tu calendario de evaluación del ciclo o muestra de instrumento formativo y sumativo con evidencia de uso de datos.'
+    ]
+  }
+};
+
+const RATING_LABELS = {
+  1: { label: 'Nivel 1', desc: 'Raramente' },
+  2: { label: 'Nivel 2', desc: 'Ocasionalmente' },
+  3: { label: 'Nivel 3', desc: 'Regularmente' },
+  4: { label: 'Nivel 4', desc: 'Consistentemente' }
+};
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+
+let currentSection = null;
+let currentStandard = null;
+let history = ['home'];
+
+function getStored() {
+  try { return JSON.parse(localStorage.getItem('balam_cognia') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveStored(data) {
+  localStorage.setItem('balam_cognia', JSON.stringify(data));
+}
+function getStandardData(sId) {
+  const d = getStored();
+  return d[sId] || null;
+}
+function countCompleted() {
+  const d = getStored();
+  return Object.keys(d).filter(k => d[k] && d[k].submitted).length;
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────────────────────
+
+function getSectionForStandard(sNum) {
+  return SECTIONS.find(s => s.standards.includes(sNum));
+}
+
+function navigate(page, params = {}) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const backBtn = document.getElementById('backBtn');
+  const breadcrumb = document.getElementById('breadcrumb');
+
+  if (page === 'home') {
+    document.getElementById('page-home').classList.add('active');
+    backBtn.style.display = 'none';
+    breadcrumb.innerHTML = '';
+    history = ['home'];
+    renderHome();
+
+  } else if (page === 'section') {
+    currentSection = params.section;
+    document.getElementById('page-section').classList.add('active');
+    backBtn.style.display = 'flex';
+    breadcrumb.innerHTML = `<span>${currentSection.nameES}</span>`;
+    history = ['home', `section:${currentSection.id}`];
+    renderSection(currentSection);
+
+  } else if (page === 'form') {
+    currentStandard = params.standard;
+    const sec = getSectionForStandard(currentStandard);
+    document.getElementById('page-form').classList.add('active');
+    backBtn.style.display = 'flex';
+    breadcrumb.innerHTML = `
+      <span class="clickable" onclick="navigate('section',{section:getSectionForStandard(${currentStandard})})" style="cursor:pointer">${sec.nameES}</span>
+      <span class="sep">›</span>
+      <span class="current">Estándar ${currentStandard}</span>
+    `;
+    history = ['home', `section:${sec.id}`, `form:${currentStandard}`];
+    renderForm(currentStandard);
+  }
+
+  // Apply section color vars
+  const sec = page === 'form' ? getSectionForStandard(currentStandard) :
+              page === 'section' ? currentSection : null;
+  if (sec) {
+    document.documentElement.style.setProperty('--card-color', sec.color);
+    document.documentElement.style.setProperty('--card-color-light', sec.colorLight);
+    document.documentElement.style.setProperty('--card-bg', sec.colorBg);
+  } else {
+    document.documentElement.style.removeProperty('--card-color');
+    document.documentElement.style.removeProperty('--card-color-light');
+    document.documentElement.style.removeProperty('--card-bg');
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  if (history.length > 1) {
+    history.pop();
+    const prev = history[history.length - 1];
+    if (prev === 'home') {
+      navigate('home');
+    } else if (prev.startsWith('section:')) {
+      const sid = parseInt(prev.split(':')[1]);
+      navigate('section', { section: SECTIONS.find(s => s.id === sid) });
+    }
+  } else {
+    navigate('home');
+  }
+}
+
+// ─── RENDER: HOME ──────────────────────────────────────────────────────────
+
+function renderHome() {
+  const stored = getStored();
+  const total = Object.values(STANDARDS).length;
+  const done = Object.values(stored).filter(v => v && v.submitted).length;
+  const pct = Math.round((done / total) * 100);
+
+  document.getElementById('globalProgressText').textContent = `${done} / ${total} estándares enviados`;
+  document.getElementById('globalProgressFill').style.width = pct + '%';
+
+  const grid = document.getElementById('sectionsGrid');
+  grid.innerHTML = SECTIONS.map(sec => {
+    const secDone = sec.standards.filter(n => stored[n] && stored[n].submitted).length;
+    const secTotal = sec.standards.length;
+    const secPct = Math.round((secDone / secTotal) * 100);
+    return `
+      <div class="section-card" style="--card-color:${sec.color};--card-color-light:${sec.colorLight};--card-bg:${sec.colorBg}"
+           onclick="navigate('section',{section:SECTIONS[${sec.id-1}]})">
+        <div class="section-card-icon">${sec.icon}</div>
+        <h3>${sec.nameES}</h3>
+        <p>${sec.desc}</p>
+        <div class="section-card-meta">
+          <span class="standards-count">${secDone}/${secTotal} enviados</span>
+          <span>${secPct}% completo</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${secPct}%;background:${sec.color}"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── RENDER: SECTION ───────────────────────────────────────────────────────
+
+function renderSection(sec) {
+  const stored = getStored();
+
+  document.getElementById('sectionHeader').innerHTML = `
+    <div class="section-header-top">
+      <div class="section-icon" style="background:${sec.colorBg}">${sec.icon}</div>
+      <h2 style="color:${sec.colorLight}">${sec.nameES}</h2>
+    </div>
+    <p class="desc">${sec.desc}</p>
+  `;
+
+  document.getElementById('standardsList').innerHTML = sec.standards.map(n => {
+    const std = STANDARDS[n];
+    const done = stored[n] && stored[n].submitted;
+    return `
+      <div class="standard-row ${done ? 'completed' : ''}"
+           style="${done ? `--card-color:${sec.color}` : ''}"
+           onclick="navigate('form',{standard:${n}})">
+        <div class="std-num">${n}</div>
+        <div class="std-body">
+          <h4>${std.title}</h4>
+          <p>${std.full}</p>
+        </div>
+        <span class="std-status ${done ? 'done' : 'pending'}" style="${done ? `background:${sec.colorBg};color:${sec.colorLight}` : ''}">
+          ${done ? '✓ Enviado' : 'Pendiente'}
+        </span>
+        <div class="std-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── RENDER: FORM ──────────────────────────────────────────────────────────
+
+function renderForm(sNum) {
+  const std = STANDARDS[sNum];
+  const sec = getSectionForStandard(sNum);
+  const saved = getStandardData(sNum) || {};
+
+  document.getElementById('formHeader').innerHTML = `
+    <div class="std-tag" style="background:${sec.colorBg};color:${sec.colorLight}">
+      Estándar ${sNum} · ${sec.nameES}
+    </div>
+    <h2>${std.title}</h2>
+    <div class="full-text" style="border-color:${sec.color}">${std.full}</div>
+  `;
+
+  const body = document.getElementById('formBody');
+  body.innerHTML = '';
+
+  // Questions 1-3 (text areas)
+  std.questions.slice(0, 3).forEach((q, i) => {
+    const idx = i + 1;
+    const savedVal = saved[`q${idx}`] || '';
+    const card = document.createElement('div');
+    card.className = 'form-card';
+    card.innerHTML = `
+      <div class="form-card-header">
+        <div class="q-num" style="background:${sec.colorBg};color:${sec.colorLight}">${idx}</div>
+        <label for="q${idx}_${sNum}">${q}</label>
+      </div>
+      <div class="form-card-body">
+        <textarea id="q${idx}_${sNum}" placeholder="Escribe tu respuesta aquí…" rows="4">${savedVal}</textarea>
+      </div>
+    `;
+    body.appendChild(card);
+  });
+
+  // Question 4 — File upload
+  const saved4 = saved.q4_filename || '';
+  const uploadCard = document.createElement('div');
+  uploadCard.className = 'form-card';
+  uploadCard.innerHTML = `
+    <div class="form-card-header">
+      <div class="q-num" style="background:${sec.colorBg};color:${sec.colorLight}">4</div>
+      <label>${std.questions[3]}</label>
+    </div>
+    <div class="form-card-body">
+      <div class="upload-area ${saved4 ? 'has-file' : ''}" id="uploadArea_${sNum}" onclick="document.getElementById('fileInput_${sNum}').click()">
+        <input type="file" id="fileInput_${sNum}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
+               onchange="handleFile(${sNum}, this)">
+        <div class="upload-icon">${saved4 ? '📎' : '📂'}</div>
+        <div class="upload-text">
+          ${saved4
+            ? `<div class="upload-filename">${saved4}</div><div class="upload-hint" style="margin-top:6px">Clic para cambiar archivo</div>`
+            : `<strong>Seleccionar archivo</strong><div class="upload-hint">PDF, Word, imagen, Excel · Máx. 20 MB</div>`
+          }
+        </div>
+      </div>
+      <div class="evidence-tag">💡 Tipo de evidencia: ${std.evidence}</div>
+    </div>
+  `;
+  body.appendChild(uploadCard);
+
+  // Self-rating
+  const savedRating = saved.rating || null;
+  const ratingCard = document.createElement('div');
+  ratingCard.className = 'form-card';
+  ratingCard.innerHTML = `
+    <div class="form-card-header">
+      <div class="q-num" style="background:${sec.colorBg};color:${sec.colorLight}">★</div>
+      <label>Autoevaluación: ¿en qué nivel se encuentra esta práctica en tu aula hoy?</label>
+    </div>
+    <div class="form-card-body">
+      <div class="rating-group">
+        ${[1,2,3,4].map(v => `
+          <div class="rating-option">
+            <input type="radio" name="rating_${sNum}" id="r${v}_${sNum}" value="${v}" ${savedRating == v ? 'checked' : ''}>
+            <label for="r${v}_${sNum}" style="${savedRating == v ? `background:${sec.colorBg};border-color:${sec.color}` : ''}">
+              <span class="rating-level" style="color:${sec.colorLight}">${v}</span>
+              <span class="rating-desc">${RATING_LABELS[v].desc}</span>
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  body.appendChild(ratingCard);
+
+  // Actions
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'form-actions';
+  actionsDiv.innerHTML = `
+    <button class="btn-primary" style="background:${sec.color}" onclick="submitForm(${sNum})">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+      Guardar evidencia
+    </button>
+    <button class="btn-secondary" onclick="navigate('section',{section:getSectionForStandard(${sNum})})">
+      Cancelar
+    </button>
+  `;
+  body.appendChild(actionsDiv);
+
+  // Restore radio label styles on load
+  [1,2,3,4].forEach(v => {
+    const radio = document.getElementById(`r${v}_${sNum}`);
+    if (radio) {
+      radio.addEventListener('change', () => updateRatingStyles(sNum, sec));
+    }
+  });
+}
+
+function updateRatingStyles(sNum, sec) {
+  [1,2,3,4].forEach(v => {
+    const radio = document.getElementById(`r${v}_${sNum}`);
+    const lbl = radio ? radio.nextElementSibling : null;
+    if (lbl) {
+      if (radio.checked) {
+        lbl.style.background = sec.colorBg;
+        lbl.style.borderColor = sec.color;
+      } else {
+        lbl.style.background = '';
+        lbl.style.borderColor = '';
+      }
+    }
+  });
+}
+
+function handleFile(sNum, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const area = document.getElementById(`uploadArea_${sNum}`);
+  area.classList.add('has-file');
+  area.querySelector('.upload-icon').textContent = '📎';
+  area.querySelector('.upload-text').innerHTML = `
+    <div class="upload-filename">${file.name}</div>
+    <div class="upload-hint" style="margin-top:6px">${(file.size/1024/1024).toFixed(2)} MB · Clic para cambiar</div>
+  `;
+  // Store filename in temp
+  area.dataset.filename = file.name;
+}
+
+function submitForm(sNum) {
+  const stored = getStored();
+  const data = stored[sNum] || {};
+
+  // Collect answers
+  data.q1 = document.getElementById(`q1_${sNum}`)?.value?.trim() || '';
+  data.q2 = document.getElementById(`q2_${sNum}`)?.value?.trim() || '';
+  data.q3 = document.getElementById(`q3_${sNum}`)?.value?.trim() || '';
+
+  const area = document.getElementById(`uploadArea_${sNum}`);
+  if (area?.dataset.filename) data.q4_filename = area.dataset.filename;
+
+  const ratingEl = document.querySelector(`input[name="rating_${sNum}"]:checked`);
+  data.rating = ratingEl ? parseInt(ratingEl.value) : null;
+
+  // Validate: at least one question answered
+  if (!data.q1 && !data.q2 && !data.q3 && !data.q4_filename && !data.rating) {
+    showToast('Completa al menos una pregunta antes de guardar.', '⚠️');
+    return;
+  }
+
+  data.submitted = true;
+  data.submittedAt = new Date().toISOString();
+  stored[sNum] = data;
+  saveStored(stored);
+
+  showToast(`Estándar ${sNum} guardado correctamente.`, '✓');
+
+  setTimeout(() => {
+    navigate('section', { section: getSectionForStandard(sNum) });
+  }, 1200);
+}
+
+function showToast(msg, icon = '✓') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg;
+  t.querySelector('.toast-icon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+
+renderHome();
+</script>
+</body>
+</html>
