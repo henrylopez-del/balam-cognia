@@ -318,6 +318,10 @@ textarea::placeholder { color: var(--light-sl); }
 .uz-label strong { color: var(--violet); }
 .uz-hint { font-size: 12px; color: var(--light-sl); margin-top: 4px; }
 .uz-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 4px; }
+.uz-multi-list { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+.uz-file-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink);
+  background: var(--bg); border-radius: 6px; padding: 6px 10px; text-align: left; }
+.uz-file-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .ev-tag {
   display: inline-flex; align-items: center; gap: 5px;
@@ -506,6 +510,7 @@ const RL = {1:'Raramente',2:'Ocasionalmente',3:'Regularmente',4:'Consistentement
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let curSec = null, curStd = null, navHist = ['home'];
+const _files = {}; // in-memory file store: {stdN: [{name, type, dataUrl}]}
 const db     = () => { try { return JSON.parse(localStorage.getItem('bc3')||'{}'); }     catch{ return {}; }};
 const dbSave = d  => localStorage.setItem('bc3', JSON.stringify(d));
 const dbMeta = () => { try { return JSON.parse(localStorage.getItem('bc3_meta')||'{}'); } catch{ return {}; }};
@@ -655,7 +660,7 @@ function renderForm(n) {
   });
 
   // Q4 upload
-  const fn=sv.q4file||'';
+  const savedFiles = sv.q4files || (sv.q4file ? [sv.q4file] : []);
   const uc=document.createElement('div'); uc.className='fcard';
   uc.innerHTML=`
     <div class="fcard-head">
@@ -663,11 +668,9 @@ function renderForm(n) {
       <label>${s.q[3]}</label>
     </div>
     <div class="fcard-body">
-      <div class="upload-zone ${fn?'filled':''}" id="uz_${n}" onclick="document.getElementById('fi_${n}').click()">
-        <input type="file" id="fi_${n}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" onchange="onFile(${n},this)">
-        <div class="uz-icon">${fn?'📎':'📄'}</div>
-        ${fn?`<div class="uz-name">${fn}</div><div class="uz-hint">Clic para cambiar</div>`
-            :`<div class="uz-label"><strong>Seleccionar archivo</strong></div><div class="uz-hint">PDF, Word, imagen, Excel · máx. 20 MB</div>`}
+      <div class="upload-zone ${savedFiles.length?'filled':''}" id="uz_${n}" onclick="document.getElementById('fi_${n}').click()">
+        <input type="file" id="fi_${n}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.mp4,.mov,.ppt,.pptx" multiple onchange="onFile(${n},this)">
+        ${uzHtml(savedFiles)}
       </div>
       <div class="ev-tag">💡 ${s.e}</div>
     </div>`;
@@ -703,15 +706,57 @@ function renderForm(n) {
   fc.appendChild(ac);
 }
 
-function onFile(n,inp) {
-  const f=inp.files[0]; if(!f) return;
-  const uz=document.getElementById('uz_'+n);
+function uzHtml(names) {
+  if (!names || !names.length)
+    return `<div class="uz-icon">📄</div><div class="uz-label"><strong>Seleccionar archivos</strong></div><div class="uz-hint">Imágenes, PDF, Word, Excel, PPT, video · múltiples permitidos</div>`;
+  const icons = {img:'🖼️', pdf:'📄', doc:'📝', xls:'📊', vid:'🎬', ppt:'📊', other:'📎'};
+  const icon = n => {
+    const e = n.split('.').pop().toLowerCase();
+    if (['jpg','jpeg','png','gif','webp'].includes(e)) return icons.img;
+    if (e==='pdf') return icons.pdf;
+    if (['doc','docx'].includes(e)) return icons.doc;
+    if (['xls','xlsx'].includes(e)) return icons.xls;
+    if (['mp4','mov','avi','webm'].includes(e)) return icons.vid;
+    if (['ppt','pptx'].includes(e)) return icons.ppt;
+    return icons.other;
+  };
+  return `<div class="uz-multi-list">${names.map(nm=>`<div class="uz-file-row">${icon(nm)}<span>${nm}</span></div>`).join('')}</div>
+    <div class="uz-hint" style="margin-top:6px">${names.length} archivo${names.length>1?'s':''} · Clic para cambiar</div>`;
+}
+
+function onFile(n, inp) {
+  const files = Array.from(inp.files); if(!files.length) return;
+  _files[n] = [];
+  const uz = document.getElementById('uz_'+n);
   uz.classList.add('filled');
-  uz.innerHTML=`<input type="file" id="fi_${n}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" onchange="onFile(${n},this)">
-    <div class="uz-icon">📎</div>
-    <div class="uz-name">${f.name}</div>
-    <div class="uz-hint">${(f.size/1048576).toFixed(2)} MB · Clic para cambiar</div>`;
-  uz.dataset.file=f.name;
+  const names = files.map(f=>f.name);
+
+  // Read each file: images as base64, others just metadata
+  let pending = files.length;
+  files.forEach((f,i) => {
+    const entry = {name: f.name, type: f.type, size: f.size, dataUrl: null};
+    _files[n].push(entry);
+    if (f.type.startsWith('image/')) {
+      const fr = new FileReader();
+      fr.onload = e => {
+        entry.dataUrl = e.target.result;
+        if (--pending === 0) refreshUz(n, names);
+      };
+      fr.readAsDataURL(f);
+    } else {
+      if (--pending === 0) refreshUz(n, names);
+    }
+  });
+
+  uz.dataset.files = JSON.stringify(names);
+}
+
+function refreshUz(n, names) {
+  const uz = document.getElementById('uz_'+n);
+  if (!uz) return;
+  uz.innerHTML = `<input type="file" id="fi_${n}" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.mp4,.mov,.ppt,.pptx" multiple onchange="onFile(${n},this)">
+    ${uzHtml(names)}`;
+  uz.dataset.files = JSON.stringify(names);
 }
 
 // ─── PDF GENERATOR ─────────────────────────────────────────────────────────
@@ -840,19 +885,56 @@ function generatePDF(n) {
     y += aH+8;
   });
 
-  // ── EVIDENCE FILE
-  ck(14);
-  doc.setFillColor(248,249,251);
-  doc.setDrawColor(217,221,232);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(ML,y,CW,13,2,2,'FD');
+  // ── EVIDENCE FILES
+  const fileList = d.q4files || (d.q4file ? [d.q4file] : []);
+  const memFiles = _files[n] || [];
+
+  ck(10);
   doc.setFont('helvetica','bold');
-  doc.setFontSize(8.5);
+  doc.setFontSize(9);
   doc.setTextColor(40,46,62);
-  doc.text('Evidencia adjunta:', ML+4, y+8.5);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(88,99,128);
-  doc.text(d.q4file||'Sin archivo adjunto', ML+42, y+8.5);
+  doc.text('Archivos de evidencia', ML, y); y+=6;
+  doc.setDrawColor(217,221,232); doc.setLineWidth(0.3);
+  doc.line(ML,y,ML+CW,y); y+=5;
+
+  if (!fileList.length) {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(150,155,170);
+    doc.text('Sin archivos adjuntos', ML, y); y+=8;
+  } else {
+    // List all filenames
+    fileList.forEach(fname => {
+      ck(7);
+      doc.setFillColor(248,249,251); doc.setDrawColor(217,221,232); doc.setLineWidth(0.2);
+      doc.roundedRect(ML,y,CW,7,1.5,1.5,'FD');
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(88,99,128);
+      const truncated = fname.length>70 ? fname.slice(0,67)+'...' : fname;
+      doc.text(truncated, ML+4, y+5);
+      y+=9;
+    });
+
+    // Embed images that were read into memory
+    const imgFiles = memFiles.filter(f=>f.dataUrl);
+    if (imgFiles.length) {
+      y+=3;
+      ck(10);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(40,46,62);
+      doc.text('Vista previa de imágenes:', ML, y); y+=5;
+      imgFiles.forEach(f => {
+        try {
+          const img = new Image();
+          img.src = f.dataUrl;
+          const maxW = CW, maxH = 100;
+          let iw = img.naturalWidth||800, ih = img.naturalHeight||600;
+          const ratio = Math.min(maxW/iw, maxH/ih, 1);
+          const pw = iw*ratio*0.264583; // px to mm
+          const ph = ih*ratio*0.264583;
+          ck(ph+6);
+          doc.addImage(f.dataUrl, 'JPEG', ML, y, pw, ph);
+          y += ph+5;
+        } catch(imgErr){ /* skip if image fails */ }
+      });
+    }
+  }
 
   // ── FOOTER BAR
   doc.setFillColor(40,46,62);
@@ -874,7 +956,8 @@ function submitForm(n) {
   e.q2=document.getElementById('q2_'+n)?.value?.trim()||'';
   e.q3=document.getElementById('q3_'+n)?.value?.trim()||'';
   const uz=document.getElementById('uz_'+n);
-  if(uz?.dataset.file) e.q4file=uz.dataset.file;
+  if(uz?.dataset.files) { try { e.q4files=JSON.parse(uz.dataset.files); } catch{} }
+  else if(uz?.dataset.file) e.q4files=[uz.dataset.file];
   const rt=document.querySelector(`input[name="rt_${n}"]:checked`);
   e.rating=rt?parseInt(rt.value):null;
   if(!e.q1&&!e.q2&&!e.q3&&!e.q4file&&!e.rating){showToast('Completa al menos un campo.');return;}
